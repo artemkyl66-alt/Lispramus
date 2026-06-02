@@ -38,6 +38,9 @@
                 (- height 5) cost))
       (format s "  </g>~%"))))
 
+(defun get-hex-color-id (color)
+  (remove #\# color))
+
 (defun render-edge (edge)
   (unless (edge-coordinates-valid-p edge)
     (error 'invalid-edge-coordinates-error))
@@ -46,12 +49,14 @@
          (x2 (edge-x2 edge))
          (y2 (edge-y2 edge))
          (label (edge-label edge))
+         (color (edge-color edge))
          (rev (edge-rev edge))
-         (marker (if rev "url(#arrow-start)" "url(#arrow-end)")))
+         (color-id (get-hex-color-id color))
+         (marker (if rev (format nil "url(#arrow-start-~A)" color-id) (format nil "url(#arrow-end-~A)" color-id))))
     (with-output-to-string (s)
       (format s "  <g class=\"edge\">~%")
-      (format s "    <path d=\"M ~A ~A L ~A ~A\" stroke=\"black\" stroke-width=\"1\" marker-~A=\"~A\" fill=\"none\"/>~%"
-              x1 y1 x2 y2
+      (format s "    <path d=\"M ~A ~A L ~A ~A\" stroke=\"~A\" stroke-width=\"1\" marker-~A=\"~A\" fill=\"none\"/>~%"
+              x1 y1 x2 y2 color
               (if rev "start" "end") marker)
       (when (and label (not (string= label "")))
         ;; heuristic midpoint for label
@@ -59,9 +64,15 @@
               (my (+ (min y1 y2) (/ (abs (- y1 y2)) 2))))
           ;; adjust if vertical vs horizontal
           (if (= x1 x2)
-              (format s "    <text x=\"~A\" y=\"~A\" dominant-baseline=\"middle\">~A</text>~%" (+ mx 5) my label)
-              (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\">~A</text>~%" mx (- my 5) label))))
+              (format s "    <text x=\"~A\" y=\"~A\" dominant-baseline=\"middle\" fill=\"~A\">~A</text>~%" (+ mx 5) my color label)
+              (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\" fill=\"~A\">~A</text>~%" mx (- my 5) color label))))
       (format s "  </g>~%"))))
+
+(defun get-unique-colors (edges)
+  (let ((colors nil))
+    (dolist (e edges)
+      (pushnew (edge-color e) colors :test #'string=))
+    colors))
 
 (defun render-svg (nodes connections)
   ;; For test-empty-icom-arrays we might be passed nil intentionally or somehow missing data.
@@ -93,16 +104,19 @@
     (setf max-y (+ max-y 20))
 
     (let ((w (max 1 (- max-x min-x)))
-          (h (max 1 (- max-y min-y))))
+          (h (max 1 (- max-y min-y)))
+          (colors (get-unique-colors edges)))
     (with-output-to-string (s)
       (format s "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"~A ~A ~A ~A\" width=\"100%\" height=\"100%\">~%" min-x min-y w h)
       (format s "  <defs>~%")
-      (format s "    <marker id=\"arrow-end\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"3\" orient=\"auto\">~%")
-      (format s "      <path d=\"M0,0 L0,6 L9,3 z\" fill=\"black\" />~%")
-      (format s "    </marker>~%")
-      (format s "    <marker id=\"arrow-start\" markerWidth=\"10\" markerHeight=\"10\" refX=\"1\" refY=\"3\" orient=\"auto\">~%")
-      (format s "      <path d=\"M9,0 L9,6 L0,3 z\" fill=\"black\" />~%")
-      (format s "    </marker>~%")
+      (dolist (color colors)
+        (let ((cid (get-hex-color-id color)))
+          (format s "    <marker id=\"arrow-end-~A\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"3\" orient=\"auto\">~%" cid)
+          (format s "      <path d=\"M0,0 L0,6 L9,3 z\" fill=\"~A\" />~%" color)
+          (format s "    </marker>~%")
+          (format s "    <marker id=\"arrow-start-~A\" markerWidth=\"10\" markerHeight=\"10\" refX=\"1\" refY=\"3\" orient=\"auto\">~%" cid)
+          (format s "      <path d=\"M9,0 L9,6 L0,3 z\" fill=\"~A\" />~%" color)
+          (format s "    </marker>~%")))
       (format s "  </defs>~%")
       (dolist (n nodes)
         (format s "~A" (render-node n)))

@@ -2,8 +2,9 @@
   (:use :cl)
   (:export #:node #:make-node #:node-id #:node-title #:node-number #:node-cost
            #:node-inputs #:node-outputs #:node-controls #:node-mechanisms
+           #:node-input-colors #:node-output-colors #:node-control-colors #:node-mechanism-colors
            #:node-width #:node-height #:node-x #:node-y
-           #:edge #:make-edge #:edge-id #:edge-label
+           #:edge #:make-edge #:edge-id #:edge-label #:edge-color
            #:edge-side #:edge-side-type
            #:edge-x1 #:edge-y1 #:edge-x2 #:edge-y2
            #:edge-rev

@@ -40,6 +40,10 @@
    (outputs :initarg :outputs :accessor node-outputs :initform nil)
    (controls :initarg :controls :accessor node-controls :initform nil)
    (mechanisms :initarg :mechanisms :accessor node-mechanisms :initform nil)
+   (input-colors :initarg :input-colors :accessor node-input-colors :initform nil)
+   (output-colors :initarg :output-colors :accessor node-output-colors :initform nil)
+   (control-colors :initarg :control-colors :accessor node-control-colors :initform nil)
+   (mechanism-colors :initarg :mechanism-colors :accessor node-mechanism-colors :initform nil)
    (width :initarg :width :accessor node-width :initform 144) ;; default 9em at 16px
    (height :initarg :height :accessor node-height :initform 96) ;; default 6em at 16px
    ;; Location
@@ -54,8 +58,8 @@
   (when (and height (not (validate-positive-number height)))
     (error 'negative-dimension-error :dimension "height" :value height)))
 
-(defun make-node (&rest args &key id title number cost inputs outputs controls mechanisms width height x y)
-  (declare (ignore id title number cost inputs outputs controls mechanisms width height x y))
+(defun make-node (&rest args &key id title number cost inputs outputs controls mechanisms input-colors output-colors control-colors mechanism-colors width height x y)
+  (declare (ignore id title number cost inputs outputs controls mechanisms input-colors output-colors control-colors mechanism-colors width height x y))
   (apply #'make-instance 'node args))
 
 
@@ -64,6 +68,7 @@
    (label :initarg :label :accessor edge-label :initform "")
    (side :initarg :side :accessor edge-side :initform :input)
    (rev :initarg :rev :accessor edge-rev :initform nil)
+   (color :initarg :color :accessor edge-color :initform "black")
    (x1 :initarg :x1 :accessor edge-x1 :initform nil)
    (y1 :initarg :y1 :accessor edge-y1 :initform nil)
    (x2 :initarg :x2 :accessor edge-x2 :initform nil)
@@ -73,8 +78,8 @@
   (unless (typep side 'edge-side-type)
     (error 'invalid-connection-error :side side)))
 
-(defun make-edge (&rest args &key id label side rev x1 y1 x2 y2)
-  (declare (ignore id label side rev x1 y1 x2 y2))
+(defun make-edge (&rest args &key id label side rev color x1 y1 x2 y2)
+  (declare (ignore id label side rev color x1 y1 x2 y2))
   (apply #'make-instance 'edge args))
 
 (defclass connection ()

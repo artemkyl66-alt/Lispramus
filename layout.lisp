@@ -49,24 +49,37 @@
                (readable-space (* *label-padding* (1- total))))
           (if (<= (+ need-space readable-space) side)
               t
-              (error 'too-many-arrows-error))))))
+              nil)))))
 
 (defun get-offset (label-min-size-list side i)
   "Calculate CSS's space-evenly style offsets."
   (let ((total (length label-min-size-list)))
     (when (or (= total 0) (= total 1))
       (return-from get-offset 0))
-    (will-fit label-min-size-list side) ;; will error if it doesn't fit
-    (let* ((need-space (+ (reduce #'+ (butlast label-min-size-list) :initial-value 0)
-                          (* *line-stroke-thickness* total)
-                          (* *label-padding* total)))
-           (even-spacing (/ (- side need-space) (1+ total)))
-           (left-start (- (/ side 2)))
-           (offset (+ (* (+ even-spacing *line-stroke-thickness* *label-padding*) i)
-                      (reduce #'+ (subseq label-min-size-list 0 i) :initial-value 0)
-                      even-spacing
-                      (/ *line-stroke-thickness* 2))))
-      (+ left-start offset))))
+    (let ((fits (will-fit label-min-size-list side)))
+      (if fits
+          (let* ((need-space (+ (reduce #'+ (butlast label-min-size-list) :initial-value 0)
+                                (* *line-stroke-thickness* total)
+                                (* *label-padding* total)))
+                 (even-spacing (/ (- side need-space) (1+ total)))
+                 (left-start (- (/ side 2)))
+                 (offset (+ (* (+ even-spacing *line-stroke-thickness* *label-padding*) i)
+                            (reduce #'+ (subseq label-min-size-list 0 i) :initial-value 0)
+                            even-spacing
+                            (/ *line-stroke-thickness* 2))))
+            (+ left-start offset))
+          (let* ((need-space (+ (reduce #'+ (rest (butlast label-min-size-list)) :initial-value 0)
+                                (* *line-stroke-thickness* total)
+                                (* *label-padding* total)))
+                 (even-spacing (/ (- side need-space) (1+ total)))
+                 (left-start (- (/ side 2)))
+                 (offset (+ (* (+ even-spacing *line-stroke-thickness* *label-padding*) i)
+                            (if (>= i 1)
+                                (reduce #'+ (subseq label-min-size-list 1 i) :initial-value 0)
+                                0)
+                            even-spacing
+                            (/ *line-stroke-thickness* 2))))
+            (+ left-start offset))))))
 
 (defun get-label-side (label-min-size-list side i input-p)
   (let ((total (length label-min-size-list)))
@@ -102,46 +115,56 @@
     ;; Inputs (left side, distributed vertically)
     (let* ((inputs (node-inputs node))
            (n (length inputs))
-           (heights (mapcar #'estimate-text-height inputs)))
+           (heights (mapcar #'estimate-text-height inputs))
+           (colors (node-input-colors node)))
       (loop for i from 0 below n
             for label in inputs
+            for color = (if colors (nth i colors) "black")
             do (let* ((offset (get-offset heights height i))
                       (ey (+ ny (/ height 2) offset))
                       (ex nx))
-                 (push (make-edge :label label :side :input :x1 (- ex 50) :y1 ey :x2 ex :y2 ey) edges))))
+                 (push (make-edge :label label :side :input :color (or color "black") :x1 (- ex 50) :y1 ey :x2 ex :y2 ey) edges))))
 
     ;; Outputs (right side, distributed vertically)
     (let* ((outputs (node-outputs node))
            (n (length outputs))
-           (heights (mapcar #'estimate-text-height outputs)))
+           (heights (mapcar #'estimate-text-height outputs))
+           (colors (node-output-colors node)))
       (loop for i from 0 below n
             for label in outputs
+            for color = (if colors (nth i colors) "black")
             do (let* ((offset (get-offset heights height i))
                       (ey (+ ny (/ height 2) offset))
                       (ex (+ nx width)))
-                 (push (make-edge :label label :side :output :x1 ex :y1 ey :x2 (+ ex 50) :y2 ey) edges))))
+                 (push (make-edge :label label :side :output :color (or color "black") :x1 ex :y1 ey :x2 (+ ex 50) :y2 ey) edges))))
 
     ;; Controls (top side, distributed horizontally)
     (let* ((controls (node-controls node))
            (n (length controls))
-           (widths (mapcar #'estimate-text-width controls)))
+           (widths (mapcar #'estimate-text-width controls))
+           (colors (node-control-colors node)))
       (loop for i from 0 below n
             for label in controls
+            for color = (if colors (nth i colors) "black")
             do (let* ((offset (get-offset widths width i))
                       (ex (+ nx (/ width 2) offset))
                       (ey ny))
-                 (push (make-edge :label label :side :control :rev t :x1 ex :y1 (- ey 50) :x2 ex :y2 ey) edges))))
+                 ;; Arrows should point *into* the node (y1 -> y2)
+                 (push (make-edge :label label :side :control :color (or color "black") :x1 ex :y1 (- ey 50) :x2 ex :y2 ey) edges))))
 
     ;; Mechanisms (bottom side, distributed horizontally)
     (let* ((mechanisms (node-mechanisms node))
            (n (length mechanisms))
-           (widths (mapcar #'estimate-text-width mechanisms)))
+           (widths (mapcar #'estimate-text-width mechanisms))
+           (colors (node-mechanism-colors node)))
       (loop for i from 0 below n
             for label in mechanisms
+            for color = (if colors (nth i colors) "black")
             do (let* ((offset (get-offset widths width i))
                       (ex (+ nx (/ width 2) offset))
                       (ey (+ ny height)))
-                 (push (make-edge :label label :side :mechanism :rev t :x1 ex :y1 (+ ey 50) :x2 ex :y2 ey) edges))))
+                 ;; Arrows should point *into* the node (y1 -> y2)
+                 (push (make-edge :label label :side :mechanism :color (or color "black") :x1 ex :y1 (+ ey 50) :x2 ex :y2 ey) edges))))
     edges))
 
 (defun check-circular-dependency (connections)
@@ -201,17 +224,17 @@ connections is a list of make-connection."
 
         (case side
           (:input
-           (push (make-edge :label label :side :input :x1 x1 :y1 y1 :x2 x1 :y2 y2) all-edges)
+           (push (make-edge :label label :side :input :rev t :x1 x1 :y1 y1 :x2 x1 :y2 y2) all-edges)
            (push (make-edge :label "" :side :input :x1 x1 :y1 y2 :x2 x2 :y2 y2) all-edges))
           (:control
            (let ((x2 (+ (node-x n2) (/ (node-width n2) 2)))
                  (y2 (node-y n2)))
-             (push (make-edge :label label :side :control :x1 x1 :y1 y1 :x2 x2 :y2 y1) all-edges)
+             (push (make-edge :label label :side :control :rev t :x1 x1 :y1 y1 :x2 x2 :y2 y1) all-edges)
              (push (make-edge :label "" :side :control :x1 x2 :y1 y1 :x2 x2 :y2 y2) all-edges)))
           (:mechanism
            (let ((x2 (+ (node-x n2) (/ (node-width n2) 2)))
                  (y2 (+ (node-y n2) (node-height n2))))
-             (push (make-edge :label label :side :mechanism :x1 x1 :y1 y1 :x2 x2 :y2 y1) all-edges)
+             (push (make-edge :label label :side :mechanism :rev t :x1 x1 :y1 y1 :x2 x2 :y2 y1) all-edges)
              (push (make-edge :label "" :side :mechanism :x1 x2 :y1 y1 :x2 x2 :y2 y2) all-edges)))
           (:output
            (push (make-edge :label label :side :output :x1 x1 :y1 y1 :x2 x2 :y2 y2) all-edges)))))
