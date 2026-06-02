@@ -188,4 +188,32 @@ connections is a list of make-connection."
   (let ((all-edges nil))
     (dolist (node nodes)
       (setf all-edges (append all-edges (route-icom node))))
+
+    (dolist (c connections)
+      (let* ((n1 (connection-from c))
+             (n2 (connection-to c))
+             (label (connection-label c))
+             (side (connection-side c))
+             (x1 (+ (node-x n1) (node-width n1)))
+             (y1 (+ (node-y n1) (/ (node-height n1) 2)))
+             (x2 (node-x n2))
+             (y2 (+ (node-y n2) (/ (node-height n2) 2))))
+
+        (case side
+          (:input
+           (push (make-edge :label label :side :input :x1 x1 :y1 y1 :x2 x1 :y2 y2) all-edges)
+           (push (make-edge :label "" :side :input :x1 x1 :y1 y2 :x2 x2 :y2 y2) all-edges))
+          (:control
+           (let ((x2 (+ (node-x n2) (/ (node-width n2) 2)))
+                 (y2 (node-y n2)))
+             (push (make-edge :label label :side :control :x1 x1 :y1 y1 :x2 x2 :y2 y1) all-edges)
+             (push (make-edge :label "" :side :control :x1 x2 :y1 y1 :x2 x2 :y2 y2) all-edges)))
+          (:mechanism
+           (let ((x2 (+ (node-x n2) (/ (node-width n2) 2)))
+                 (y2 (+ (node-y n2) (node-height n2))))
+             (push (make-edge :label label :side :mechanism :x1 x1 :y1 y1 :x2 x2 :y2 y1) all-edges)
+             (push (make-edge :label "" :side :mechanism :x1 x2 :y1 y1 :x2 x2 :y2 y2) all-edges)))
+          (:output
+           (push (make-edge :label label :side :output :x1 x1 :y1 y1 :x2 x2 :y2 y2) all-edges)))))
+
     all-edges))

@@ -70,9 +70,32 @@
   (unless (listp nodes)
     (error 'missing-icom-arrays-error))
 
-  (let ((edges (calculate-layout nodes connections)))
+  (let* ((edges (calculate-layout nodes connections))
+         (min-x 0) (min-y 0) (max-x 0) (max-y 0))
+
+    (dolist (n nodes)
+      (setf min-x (min min-x (node-x n)))
+      (setf min-y (min min-y (node-y n)))
+      (setf max-x (max max-x (+ (node-x n) (node-width n))))
+      (setf max-y (max max-y (+ (node-y n) (node-height n)))))
+
+    (dolist (e edges)
+      (when (edge-coordinates-valid-p e)
+        (setf min-x (min min-x (edge-x1 e) (edge-x2 e)))
+        (setf min-y (min min-y (edge-y1 e) (edge-y2 e)))
+        (setf max-x (max max-x (edge-x1 e) (edge-x2 e)))
+        (setf max-y (max max-y (edge-y1 e) (edge-y2 e)))))
+
+    ;; Add some padding
+    (setf min-x (- min-x 20))
+    (setf min-y (- min-y 20))
+    (setf max-x (+ max-x 20))
+    (setf max-y (+ max-y 20))
+
+    (let ((w (max 1 (- max-x min-x)))
+          (h (max 1 (- max-y min-y))))
     (with-output-to-string (s)
-      (format s "<svg xmlns=\"http://www.w3.org/2000/svg\">~%")
+      (format s "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"~A ~A ~A ~A\" width=\"100%\" height=\"100%\">~%" min-x min-y w h)
       (format s "  <defs>~%")
       (format s "    <marker id=\"arrow-end\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"3\" orient=\"auto\">~%")
       (format s "      <path d=\"M0,0 L0,6 L9,3 z\" fill=\"black\" />~%")
@@ -85,4 +108,4 @@
         (format s "~A" (render-node n)))
       (dolist (e edges)
         (format s "~A" (render-edge e)))
-      (format s "</svg>~%"))))
+      (format s "</svg>~%")))))
