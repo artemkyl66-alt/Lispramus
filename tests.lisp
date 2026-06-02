@@ -87,11 +87,13 @@
   (signals negative-dimension-error (make-node :id "n1" :title "P1" :height -5)))
 
 (test test-circular-dependency
-  (let* ((n1 (make-node :id "n1" :title "P1"))
-         (n2 (make-node :id "n2" :title "P2"))
+  ;; We now allow circular dependencies for feedback loops.
+  ;; The algorithm should return a set of edges including feedback paths without throwing.
+  (let* ((n1 (make-node :id "n1" :title "P1" :x 0 :y 0))
+         (n2 (make-node :id "n2" :title "P2" :x 200 :y 0))
          (c1 (make-connection n1 n2 :side :input))
-         (c2 (make-connection n2 n1 :side :input)))
-    (signals circular-dependency-error (check-circular-dependency (list c1 c2)))))
+         (c2 (make-connection n2 n1 :side :control)))
+    (is (listp (calculate-layout (list n1 n2) (list c1 c2))))))
 
 (test test-empty-icom-arrays
   (signals missing-icom-arrays-error (render-svg :not-a-list nil)))

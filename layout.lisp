@@ -167,31 +167,6 @@
                  (push (make-edge :label label :side :mechanism :color (or color "black") :x1 ex :y1 (+ ey 50) :x2 ex :y2 ey) edges))))
     edges))
 
-(defun check-circular-dependency (connections)
-  "Basic circular dependency checker for decomposition nodes.
-connections is a list of make-connection."
-  (let ((adj (make-hash-table :test 'equal)))
-    (dolist (c connections)
-      (push (connection-to c) (gethash (connection-from c) adj)))
-
-    (let ((visited (make-hash-table :test 'equal))
-          (rec-stack (make-hash-table :test 'equal)))
-      (labels ((dfs (v)
-                 (when (gethash v rec-stack)
-                   (return-from dfs t))
-                 (when (gethash v visited)
-                   (return-from dfs nil))
-                 (setf (gethash v visited) t)
-                 (setf (gethash v rec-stack) t)
-                 (dolist (neighbor (gethash v adj))
-                   (when (dfs neighbor)
-                     (return-from dfs t)))
-                 (setf (gethash v rec-stack) nil)
-                 nil))
-        (dolist (c connections)
-          (when (dfs (connection-from c))
-            (error 'circular-dependency-error)))))))
-
 (defun check-overlapping-blocks (nodes)
   "Checks if any two rectangular nodes overlap."
   (let ((n (length nodes)))
@@ -206,37 +181,101 @@ connections is a list of make-connection."
             (error 'overlapping-blocks-error)))))))
 
 (defun calculate-layout (nodes connections)
-  (check-circular-dependency connections)
+  ;; Feedback loops are normal in IDEF0, so circular dependencies are allowed.
   (check-overlapping-blocks nodes)
-  (let ((all-edges nil))
+  (let ((all-edges nil)
+        (from-counts (make-hash-table))
+        (to-counts (make-hash-table :test 'equal)))
+
     (dolist (node nodes)
       (setf all-edges (append all-edges (route-icom node))))
 
     (dolist (c connections)
-      (let* ((n1 (connection-from c))
-             (n2 (connection-to c))
-             (label (connection-label c))
-             (side (connection-side c))
-             (x1 (+ (node-x n1) (node-width n1)))
-             (y1 (+ (node-y n1) (/ (node-height n1) 2)))
-             (x2 (node-x n2))
-             (y2 (+ (node-y n2) (/ (node-height n2) 2))))
+      (incf (gethash (connection-from c) from-counts 0))
+      (incf (gethash (list (connection-to c) (connection-side c)) to-counts 0)))
 
-        (case side
-          (:input
-           (push (make-edge :label label :side :input :rev t :x1 x1 :y1 y1 :x2 x1 :y2 y2) all-edges)
-           (push (make-edge :label "" :side :input :x1 x1 :y1 y2 :x2 x2 :y2 y2) all-edges))
-          (:control
-           (let ((x2 (+ (node-x n2) (/ (node-width n2) 2)))
-                 (y2 (node-y n2)))
-             (push (make-edge :label label :side :control :rev t :x1 x1 :y1 y1 :x2 x2 :y2 y1) all-edges)
-             (push (make-edge :label "" :side :control :x1 x2 :y1 y1 :x2 x2 :y2 y2) all-edges)))
-          (:mechanism
-           (let ((x2 (+ (node-x n2) (/ (node-width n2) 2)))
-                 (y2 (+ (node-y n2) (node-height n2))))
-             (push (make-edge :label label :side :mechanism :rev t :x1 x1 :y1 y1 :x2 x2 :y2 y1) all-edges)
-             (push (make-edge :label "" :side :mechanism :x1 x2 :y1 y1 :x2 x2 :y2 y2) all-edges)))
-          (:output
-           (push (make-edge :label label :side :output :x1 x1 :y1 y1 :x2 x2 :y2 y2) all-edges)))))
+    (let ((from-seen (make-hash-table))
+          (to-seen (make-hash-table :test 'equal))
+          (y-track 10))
+      (dolist (c connections)
+        (let* ((n1 (connection-from c))
+               (n2 (connection-to c))
+               (label (connection-label c))
+               (side (connection-side c))
 
+               (f-idx (gethash n1 from-seen 0))
+               (f-total (gethash n1 from-counts 1))
+               (f-offset (if (> f-total 1) (- (* (/ (node-height n1) f-total) f-idx) (/ (node-height n1) 2.5)) 0))
+
+               (t-idx (gethash (list n2 side) to-seen 0))
+               (t-total (gethash (list n2 side) to-counts 1))
+
+               (x1 (+ (node-x n1) (node-width n1)))
+               (y1 (+ (node-y n1) (/ (node-height n1) 2) f-offset)))
+
+          (setf (gethash n1 from-seen) (1+ f-idx))
+          (setf (gethash (list n2 side) to-seen) (1+ t-idx))
+
+          (case side
+            (:input
+             (let* ((t-offset (if (> t-total 1) (- (* (/ (node-height n2) t-total) t-idx) (/ (node-height n2) 2.5)) 0))
+                    (x2 (node-x n2))
+                    (y2 (+ (node-y n2) (/ (node-height n2) 2) t-offset)))
+               (if (<= x1 x2)
+                   ;; Forward
+                   (let ((mid-x (+ x1 (/ (- x2 x1) 2))))
+                     (push (make-edge :label label :side :input :x1 x1 :y1 y1 :x2 mid-x :y2 y1) all-edges)
+                     (push (make-edge :label "" :side :input :x1 mid-x :y1 y1 :x2 mid-x :y2 y2) all-edges)
+                     (push (make-edge :label "" :side :input :rev t :x1 mid-x :y1 y2 :x2 x2 :y2 y2) all-edges))
+                   ;; Feedback (right to left)
+                   (let ((mid-y (+ (max y1 y2) 40 y-track)))
+                     (incf y-track 15)
+                     (push (make-edge :label label :side :input :x1 x1 :y1 y1 :x2 (+ x1 20) :y2 y1) all-edges)
+                     (push (make-edge :label "" :side :input :x1 (+ x1 20) :y1 y1 :x2 (+ x1 20) :y2 mid-y) all-edges)
+                     (push (make-edge :label "" :side :input :x1 (+ x1 20) :y1 mid-y :x2 (- x2 20) :y2 mid-y) all-edges)
+                     (push (make-edge :label "" :side :input :x1 (- x2 20) :y1 mid-y :x2 (- x2 20) :y2 y2) all-edges)
+                     (push (make-edge :label "" :side :input :rev t :x1 (- x2 20) :y1 y2 :x2 x2 :y2 y2) all-edges)))))
+            (:control
+             (let* ((t-offset (if (> t-total 1) (- (* (/ (node-width n2) t-total) t-idx) (/ (node-width n2) 2.5)) 0))
+                    (x2 (+ (node-x n2) (/ (node-width n2) 2) t-offset))
+                    (y2 (node-y n2)))
+               (if (eq n1 n2)
+                   ;; Self loop
+                   (let ((mid-x (+ x1 30 y-track))
+                         (mid-y (- y2 30 y-track)))
+                     (incf y-track 15)
+                     (push (make-edge :label label :side :control :x1 x1 :y1 y1 :x2 mid-x :y2 y1) all-edges)
+                     (push (make-edge :label "" :side :control :x1 mid-x :y1 y1 :x2 mid-x :y2 mid-y) all-edges)
+                     (push (make-edge :label "" :side :control :x1 mid-x :y1 mid-y :x2 x2 :y2 mid-y) all-edges)
+                     (push (make-edge :label "" :side :control :rev t :x1 x2 :y1 mid-y :x2 x2 :y2 y2) all-edges))
+                   (if (<= x1 x2)
+                       ;; Forward
+                       (let ((mid-x x2))
+                         (push (make-edge :label label :side :control :x1 x1 :y1 y1 :x2 mid-x :y2 y1) all-edges)
+                         (push (make-edge :label "" :side :control :rev t :x1 mid-x :y1 y1 :x2 x2 :y2 y2) all-edges))
+                       ;; Feedback
+                       (let ((mid-y (- (min y1 y2) 40 y-track)))
+                         (incf y-track 15)
+                         (push (make-edge :label label :side :control :x1 x1 :y1 y1 :x2 (+ x1 20) :y2 y1) all-edges)
+                         (push (make-edge :label "" :side :control :x1 (+ x1 20) :y1 y1 :x2 (+ x1 20) :y2 mid-y) all-edges)
+                         (push (make-edge :label "" :side :control :x1 (+ x1 20) :y1 mid-y :x2 x2 :y2 mid-y) all-edges)
+                         (push (make-edge :label "" :side :control :rev t :x1 x2 :y1 mid-y :x2 x2 :y2 y2) all-edges))))))
+            (:mechanism
+             (let* ((t-offset (if (> t-total 1) (- (* (/ (node-width n2) t-total) t-idx) (/ (node-width n2) 2.5)) 0))
+                    (x2 (+ (node-x n2) (/ (node-width n2) 2) t-offset))
+                    (y2 (+ (node-y n2) (node-height n2))))
+               (if (<= x1 x2)
+                   ;; Forward
+                   (let ((mid-x x2))
+                     (push (make-edge :label label :side :mechanism :x1 x1 :y1 y1 :x2 mid-x :y2 y1) all-edges)
+                     (push (make-edge :label "" :side :mechanism :rev t :x1 mid-x :y1 y1 :x2 x2 :y2 y2) all-edges))
+                   ;; Feedback
+                   (let ((mid-y (+ (max y1 y2) 40 y-track)))
+                     (incf y-track 15)
+                     (push (make-edge :label label :side :mechanism :x1 x1 :y1 y1 :x2 (+ x1 20) :y2 y1) all-edges)
+                     (push (make-edge :label "" :side :mechanism :x1 (+ x1 20) :y1 y1 :x2 (+ x1 20) :y2 mid-y) all-edges)
+                     (push (make-edge :label "" :side :mechanism :x1 (+ x1 20) :y1 mid-y :x2 x2 :y2 mid-y) all-edges)
+                     (push (make-edge :label "" :side :mechanism :rev t :x1 x2 :y1 mid-y :x2 x2 :y2 y2) all-edges)))))
+            (:output
+             (push (make-edge :label label :side :output :x1 x1 :y1 y1 :x2 (+ x1 50) :y2 y1) all-edges))))))
     all-edges))

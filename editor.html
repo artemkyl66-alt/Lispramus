@@ -74,9 +74,23 @@
         img: 'diagram2.svg'
       },
       {
-        text: `#context-diagram(
-  [Декомпозиция: Process Data + Store Data],
-)`,
+        text: `;; Lisp Data Representation for Decomposition Diagram
+(list
+  (make-node :id "choice" :title "Выбор поставщиков")
+  (make-node :id "order" :title "Формирование заказа")
+  (make-node :id "control" :title "Контроль исполнения заказов")
+  (make-node :id "return" :title "Возврат товаров поставщику"))
+
+(list
+  (make-connection "choice" "order" :side :input :label "Список поставщиков")
+  (make-connection "order" "order" :side :control :label "График выполнения поставок")
+  (make-connection "order" "control" :side :control :label "График выполнения поставок")
+  (make-connection "order" "control" :side :control :label "Договор")
+  (make-connection "order" "return" :side :control :label "Договор")
+  (make-connection "order" "control" :side :input :label "Заказ")
+  (make-connection "order" "control" :side :input :label "Требование подтверждения")
+  (make-connection "control" "order" :side :input :label "Отказ принятия заказа")
+  (make-connection "control" "return" :side :input :label "Неудовлетворяющий требованиям товар"))`,
         img: 'diagram3.svg'
       }
     ];
