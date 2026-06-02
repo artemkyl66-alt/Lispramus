@@ -1,0 +1,88 @@
+(in-package :idef0.svg)
+
+;; Error conditions
+(define-condition svg-error (error) ())
+(define-condition invalid-edge-coordinates-error (svg-error)
+  ()
+  (:report (lambda (condition stream)
+             (declare (ignore condition))
+             (format stream "Edge missing one or more coordinates (x1, y1, x2, y2)"))))
+(define-condition missing-icom-arrays-error (svg-error)
+  ()
+  (:report (lambda (condition stream)
+             (declare (ignore condition))
+             (format stream "Missing mandatory data for SVG rendering (e.g. nil passed directly)"))))
+
+
+(defun edge-coordinates-valid-p (edge)
+  (and (edge-x1 edge) (edge-y1 edge) (edge-x2 edge) (edge-y2 edge)))
+
+(defun render-node (node)
+  (let ((x (node-x node))
+        (y (node-y node))
+        (width (node-width node))
+        (height (node-height node))
+        (title (node-title node))
+        (number (node-number node))
+        (cost (node-cost node)))
+    (with-output-to-string (s)
+      (format s "  <g class=\"node\" transform=\"translate(~A, ~A)\">~%" x y)
+      (format s "    <rect width=\"~A\" height=\"~A\" fill=\"white\" stroke=\"black\" stroke-width=\"2\"/>~%" width height)
+      (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\" dominant-baseline=\"middle\">~A</text>~%"
+              (/ width 2) (/ height 2) title)
+      (when number
+        (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"end\" dominant-baseline=\"auto\" font-size=\"12\">~A</text>~%"
+                (- width 5) (- height 5) number))
+      (when cost
+        (format s "    <text x=\"5\" y=\"~A\" text-anchor=\"start\" dominant-baseline=\"auto\" font-size=\"12\">~A</text>~%"
+                (- height 5) cost))
+      (format s "  </g>~%"))))
+
+(defun render-edge (edge)
+  (unless (edge-coordinates-valid-p edge)
+    (error 'invalid-edge-coordinates-error))
+  (let* ((x1 (edge-x1 edge))
+         (y1 (edge-y1 edge))
+         (x2 (edge-x2 edge))
+         (y2 (edge-y2 edge))
+         (label (edge-label edge))
+         (rev (edge-rev edge))
+         (marker (if rev "url(#arrow-start)" "url(#arrow-end)")))
+    (with-output-to-string (s)
+      (format s "  <g class=\"edge\">~%")
+      (format s "    <path d=\"M ~A ~A L ~A ~A\" stroke=\"black\" stroke-width=\"1\" marker-~A=\"~A\" fill=\"none\"/>~%"
+              x1 y1 x2 y2
+              (if rev "start" "end") marker)
+      (when (and label (not (string= label "")))
+        ;; heuristic midpoint for label
+        (let ((mx (+ (min x1 x2) (/ (abs (- x1 x2)) 2)))
+              (my (+ (min y1 y2) (/ (abs (- y1 y2)) 2))))
+          ;; adjust if vertical vs horizontal
+          (if (= x1 x2)
+              (format s "    <text x=\"~A\" y=\"~A\" dominant-baseline=\"middle\">~A</text>~%" (+ mx 5) my label)
+              (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\">~A</text>~%" mx (- my 5) label))))
+      (format s "  </g>~%"))))
+
+(defun render-svg (nodes connections)
+  ;; For test-empty-icom-arrays we might be passed nil intentionally or somehow missing data.
+  ;; We must accept nil for empty nodes/connections, but if someone calls with malformed nodes list containing nils,
+  ;; we should error. Let's make sure 'nodes' is a list and not just something that breaks.
+  (unless (listp nodes)
+    (error 'missing-icom-arrays-error))
+
+  (let ((edges (calculate-layout nodes connections)))
+    (with-output-to-string (s)
+      (format s "<svg xmlns=\"http://www.w3.org/2000/svg\">~%")
+      (format s "  <defs>~%")
+      (format s "    <marker id=\"arrow-end\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"3\" orient=\"auto\">~%")
+      (format s "      <path d=\"M0,0 L0,6 L9,3 z\" fill=\"black\" />~%")
+      (format s "    </marker>~%")
+      (format s "    <marker id=\"arrow-start\" markerWidth=\"10\" markerHeight=\"10\" refX=\"1\" refY=\"3\" orient=\"auto\">~%")
+      (format s "      <path d=\"M9,0 L9,6 L0,3 z\" fill=\"black\" />~%")
+      (format s "    </marker>~%")
+      (format s "  </defs>~%")
+      (dolist (n nodes)
+        (format s "~A" (render-node n)))
+      (dolist (e edges)
+        (format s "~A" (render-edge e)))
+      (format s "</svg>~%"))))
