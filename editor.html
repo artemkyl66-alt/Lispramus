@@ -5,8 +5,8 @@
   <style>
     body { font-family: sans-serif; display: flex; flex-direction: row; margin: 0; min-height: 100vh;}
     .left { flex: 1; padding: 20px; background: #282c34; color: #abb2bf; font-family: monospace; white-space: pre-wrap;}
-    .right { flex: 1; padding: 20px; background: #fafafa; display: flex; align-items: center; justify-content: center; overflow: auto; border-left: 2px solid #ccc; }
-    svg { border: 1px dashed #ccc; padding: 50px; background: white;}
+    .right { flex: 2; padding: 20px; background: #fafafa; display: flex; align-items: center; justify-content: center; overflow: auto; border-left: 2px solid #ccc; }
+    svg { border: 1px dashed #ccc; padding: 100px; background: white;}
   </style>
 </head>
 <body>
@@ -19,58 +19,30 @@
   <script>
     const config = [
       {
-        text: `#context-diagram(
-  input-stroke: rgb("#1dac15"),
-  output-stroke: rgb("#ff0000"),
-  mechanism-stroke: (rgb("#89b9b4"), rgb("#0101ae")),
-  [Закупочная деятельность предприятия],
-  input: (
-    ([Статистика продаж], (label-pos: 24.2%)),
-    ([Решение о закупке руководством], (label-pos: 42%)),
-    ([Заявка со склада], (label-pos: 22%)),
-    [Поставщики],
-    ([Товар от поставщика], (label-pos: 26.5%)),
-  ),
-  output: (
-    [Поставленный товар],
-    ([Документы на закупленный товар], (label-pos: 51%)),
-  ),
-  control: (
-    ([Законодательные акты], (label-pos: 20%)),
-    ([Конъюнктура рынка], (label-pos: 20%)),
-    [Метод закупки товаров],
-  ),
-  mechanism: (
-    [Сотрудники],
-    [ПК, средства связи],
-  ),
-)`,
+        text: `;; Lisp Data Representation for Single Styled Node Diagram
+(list
+  (make-node :id "A0"
+             :title "Закупочная деятельность предприятия"
+             :inputs '("Статистика продаж" "Решение о закупке руководством"
+                       "Заявка со склада" "Поставщики" "Товар от поставщика")
+             :input-colors '("#1dac15" "#1dac15" "#1dac15" "#1dac15" "#1dac15")
+             :outputs '("Поставленный товар" "Документы на закупленный товар")
+             :output-colors '("#ff0000" "#ff0000")
+             :controls '("Законодательные акты" "Конъюнктура рынка" "Метод закупки товаров")
+             :mechanisms '("Сотрудники" "ПК, средства связи")
+             :mechanism-colors '("#89b9b4" "#0101ae")))`,
         img: 'diagram1.svg'
       },
       {
-        text: `#context-diagram(
-  [Закупочная деятельность предприятия],
-  input: (
-    [Статистика продаж],
-    [Решение о закупке руководством],
-    [Заявка со склада],
-    [Поставщики],
-    [Товар от поставщика],
-  ),
-  output: (
-    [Поставленный товар],
-    [Документы на закупленный товар],
-  ),
-  control: (
-    [Законодательные акты],
-    [Конъюнктура рынка],
-    [Метод закупки товаров],
-  ),
-  mechanism: (
-    [Сотрудники],
-    [ПК, средства связи],
-  ),
-)`,
+        text: `;; Lisp Data Representation for Single Node (Default Colors)
+(list
+  (make-node :id "A1"
+             :title "Закупочная деятельность предприятия"
+             :inputs '("Статистика продаж" "Решение о закупке руководством"
+                       "Заявка со склада" "Поставщики" "Товар от поставщика")
+             :outputs '("Поставленный товар" "Документы на закупленный товар")
+             :controls '("Законодательные акты" "Конъюнктура рынка" "Метод закупки товаров")
+             :mechanisms '("Сотрудники" "ПК, средства связи")))`,
         img: 'diagram2.svg'
       },
       {

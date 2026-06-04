@@ -9,54 +9,54 @@
   </defs>
   <g class="node" transform="translate(0, 0)">
     <rect width="250" height="100" fill="white" stroke="black" stroke-width="2"/>
-    <text x="125" y="50" text-anchor="middle" dominant-baseline="middle">Закупочная деятельность предприятия</text>
+    <text x="125" y="50" text-anchor="middle" dominant-baseline="middle" font-size="16">Закупочная деятельность предприятия</text>
   </g>
   <g class="edge">
     <path d="M 192.43333 150 L 192.43333 100" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="197.43333" y="125" dominant-baseline="middle" fill="black">ПК, средства связи</text>
+    <text x="197.43333" y="125" dominant-baseline="middle" font-size="16" fill="black">ПК, средства связи</text>
   </g>
   <g class="edge">
     <path d="M 54.36667 150 L 54.36667 100" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="59.36667" y="125" dominant-baseline="middle" fill="black">Сотрудники</text>
+    <text x="59.36667" y="125" dominant-baseline="middle" font-size="16" fill="black">Сотрудники</text>
   </g>
   <g class="edge">
     <path d="M 220.95001 -50 L 220.95001 0" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="225.95001" y="-25" dominant-baseline="middle" fill="black">Метод закупки товаров</text>
+    <text x="225.95001" y="-25" dominant-baseline="middle" font-size="16" fill="black">Метод закупки товаров</text>
   </g>
   <g class="edge">
     <path d="M 55.399994 -50 L 55.399994 0" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="60.399994" y="-25" dominant-baseline="middle" fill="black">Конъюнктура рынка</text>
+    <text x="60.399994" y="-25" dominant-baseline="middle" font-size="16" fill="black">Конъюнктура рынка</text>
   </g>
   <g class="edge">
     <path d="M 25.849998 -50 L 25.849998 0" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="30.849998" y="-25" dominant-baseline="middle" fill="black">Законодательные акты</text>
+    <text x="30.849998" y="-25" dominant-baseline="middle" font-size="16" fill="black">Законодательные акты</text>
   </g>
   <g class="edge">
     <path d="M 250 71.1 L 300 71.1" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="275" y="66.1" text-anchor="middle" fill="black">Документы на закупленный товар</text>
+    <text x="275" y="61.1" text-anchor="middle" font-size="16" fill="black">Документы на закупленный товар</text>
   </g>
   <g class="edge">
     <path d="M 250 25.699999 L 300 25.699999" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="275" y="20.699999" text-anchor="middle" fill="black">Поставленный товар</text>
+    <text x="275" y="15.699999" text-anchor="middle" font-size="16" fill="black">Поставленный товар</text>
   </g>
   <g class="edge">
     <path d="M -50 93.8 L 0 93.8" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="-25" y="88.8" text-anchor="middle" fill="black">Товар от поставщика</text>
+    <text x="-25" y="83.8" text-anchor="middle" font-size="16" fill="black">Товар от поставщика</text>
   </g>
   <g class="edge">
     <path d="M -50 71.1 L 0 71.1" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="-25" y="66.1" text-anchor="middle" fill="black">Поставщики</text>
+    <text x="-25" y="61.1" text-anchor="middle" font-size="16" fill="black">Поставщики</text>
   </g>
   <g class="edge">
     <path d="M -50 48.4 L 0 48.4" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="-25" y="43.4" text-anchor="middle" fill="black">Заявка со склада</text>
+    <text x="-25" y="38.4" text-anchor="middle" font-size="16" fill="black">Заявка со склада</text>
   </g>
   <g class="edge">
     <path d="M -50 25.7 L 0 25.7" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="-25" y="20.7" text-anchor="middle" fill="black">Решение о закупке руководством</text>
+    <text x="-25" y="15.700001" text-anchor="middle" font-size="16" fill="black">Решение о закупке руководством</text>
   </g>
   <g class="edge">
     <path d="M -50 3.0 L 0 3.0" stroke="black" stroke-width="1" marker-end="url(#arrow-end-black)" fill="none"/>
-    <text x="-25" y="-2.0" text-anchor="middle" fill="black">Статистика продаж</text>
+    <text x="-25" y="-7.0" text-anchor="middle" font-size="16" fill="black">Статистика продаж</text>
   </g>
 </svg>

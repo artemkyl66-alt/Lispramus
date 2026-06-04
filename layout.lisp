@@ -187,8 +187,11 @@
         (from-counts (make-hash-table))
         (to-counts (make-hash-table :test 'equal)))
 
-    (dolist (node nodes)
-      (setf all-edges (append all-edges (route-icom node))))
+    ;; ONLY generate route-icom stubs for single node diagrams (no connections).
+    ;; When there are connections, the advanced router takes full control of all lines.
+    (if (null connections)
+        (dolist (node nodes)
+          (setf all-edges (append all-edges (route-icom node)))))
 
     (dolist (c connections)
       (incf (gethash (connection-from c) from-counts 0))
@@ -228,8 +231,8 @@
                      (push (make-edge :label "" :side :input :x1 mid-x :y1 y1 :x2 mid-x :y2 y2) all-edges)
                      (push (make-edge :label "" :side :input :rev t :x1 mid-x :y1 y2 :x2 x2 :y2 y2) all-edges))
                    ;; Feedback (right to left)
-                   (let ((mid-y (+ (max y1 y2) 40 y-track)))
-                     (incf y-track 15)
+                   (let ((mid-y (+ (max y1 y2) 80 y-track)))
+                     (incf y-track 25)
                      (push (make-edge :label label :side :input :x1 x1 :y1 y1 :x2 (+ x1 20) :y2 y1) all-edges)
                      (push (make-edge :label "" :side :input :x1 (+ x1 20) :y1 y1 :x2 (+ x1 20) :y2 mid-y) all-edges)
                      (push (make-edge :label "" :side :input :x1 (+ x1 20) :y1 mid-y :x2 (- x2 20) :y2 mid-y) all-edges)
@@ -242,8 +245,8 @@
                (if (eq n1 n2)
                    ;; Self loop
                    (let ((mid-x (+ x1 30 y-track))
-                         (mid-y (- y2 30 y-track)))
-                     (incf y-track 15)
+                         (mid-y (- y2 60 y-track)))
+                     (incf y-track 25)
                      (push (make-edge :label label :side :control :x1 x1 :y1 y1 :x2 mid-x :y2 y1) all-edges)
                      (push (make-edge :label "" :side :control :x1 mid-x :y1 y1 :x2 mid-x :y2 mid-y) all-edges)
                      (push (make-edge :label "" :side :control :x1 mid-x :y1 mid-y :x2 x2 :y2 mid-y) all-edges)
@@ -254,8 +257,8 @@
                          (push (make-edge :label label :side :control :x1 x1 :y1 y1 :x2 mid-x :y2 y1) all-edges)
                          (push (make-edge :label "" :side :control :rev t :x1 mid-x :y1 y1 :x2 x2 :y2 y2) all-edges))
                        ;; Feedback
-                       (let ((mid-y (- (min y1 y2) 40 y-track)))
-                         (incf y-track 15)
+                       (let ((mid-y (- (min y1 y2) 80 y-track)))
+                         (incf y-track 25)
                          (push (make-edge :label label :side :control :x1 x1 :y1 y1 :x2 (+ x1 20) :y2 y1) all-edges)
                          (push (make-edge :label "" :side :control :x1 (+ x1 20) :y1 y1 :x2 (+ x1 20) :y2 mid-y) all-edges)
                          (push (make-edge :label "" :side :control :x1 (+ x1 20) :y1 mid-y :x2 x2 :y2 mid-y) all-edges)
@@ -270,8 +273,8 @@
                      (push (make-edge :label label :side :mechanism :x1 x1 :y1 y1 :x2 mid-x :y2 y1) all-edges)
                      (push (make-edge :label "" :side :mechanism :rev t :x1 mid-x :y1 y1 :x2 x2 :y2 y2) all-edges))
                    ;; Feedback
-                   (let ((mid-y (+ (max y1 y2) 40 y-track)))
-                     (incf y-track 15)
+                   (let ((mid-y (+ (max y1 y2) 80 y-track)))
+                     (incf y-track 25)
                      (push (make-edge :label label :side :mechanism :x1 x1 :y1 y1 :x2 (+ x1 20) :y2 y1) all-edges)
                      (push (make-edge :label "" :side :mechanism :x1 (+ x1 20) :y1 y1 :x2 (+ x1 20) :y2 mid-y) all-edges)
                      (push (make-edge :label "" :side :mechanism :x1 (+ x1 20) :y1 mid-y :x2 x2 :y2 mid-y) all-edges)

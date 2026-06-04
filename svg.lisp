@@ -28,13 +28,13 @@
     (with-output-to-string (s)
       (format s "  <g class=\"node\" transform=\"translate(~A, ~A)\">~%" x y)
       (format s "    <rect width=\"~A\" height=\"~A\" fill=\"white\" stroke=\"black\" stroke-width=\"2\"/>~%" width height)
-      (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\" dominant-baseline=\"middle\">~A</text>~%"
+      (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"16\">~A</text>~%"
               (/ width 2) (/ height 2) title)
       (when number
-        (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"end\" dominant-baseline=\"auto\" font-size=\"12\">~A</text>~%"
+        (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"end\" dominant-baseline=\"auto\" font-size=\"14\">~A</text>~%"
                 (- width 5) (- height 5) number))
       (when cost
-        (format s "    <text x=\"5\" y=\"~A\" text-anchor=\"start\" dominant-baseline=\"auto\" font-size=\"12\">~A</text>~%"
+        (format s "    <text x=\"5\" y=\"~A\" text-anchor=\"start\" dominant-baseline=\"auto\" font-size=\"14\">~A</text>~%"
                 (- height 5) cost))
       (format s "  </g>~%"))))
 
@@ -64,8 +64,8 @@
               (my (+ (min y1 y2) (/ (abs (- y1 y2)) 2))))
           ;; adjust if vertical vs horizontal
           (if (= x1 x2)
-              (format s "    <text x=\"~A\" y=\"~A\" dominant-baseline=\"middle\" fill=\"~A\">~A</text>~%" (+ mx 5) my color label)
-              (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\" fill=\"~A\">~A</text>~%" mx (- my 5) color label))))
+              (format s "    <text x=\"~A\" y=\"~A\" dominant-baseline=\"middle\" font-size=\"16\" fill=\"~A\">~A</text>~%" (+ mx 5) my color label)
+              (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\" font-size=\"16\" fill=\"~A\">~A</text>~%" mx (- my 10) color label))))
       (format s "  </g>~%"))))
 
 (defun get-unique-colors (edges)
