@@ -60,12 +60,27 @@
               (if rev "start" "end") marker)
       (when (and label (not (string= label "")))
         ;; heuristic midpoint for label
-        (let ((mx (+ (min x1 x2) (/ (abs (- x1 x2)) 2)))
-              (my (+ (min y1 y2) (/ (abs (- y1 y2)) 2))))
+        (let* ((mx (+ (min x1 x2) (/ (abs (- x1 x2)) 2)))
+               (my (+ (min y1 y2) (/ (abs (- y1 y2)) 2)))
+               (text-w (* (length label) 9))
+               (text-h 20)
+               (rect-x 0) (rect-y 0) (text-x 0) (text-y 0))
           ;; adjust if vertical vs horizontal
           (if (= x1 x2)
-              (format s "    <text x=\"~A\" y=\"~A\" dominant-baseline=\"middle\" font-size=\"16\" fill=\"~A\">~A</text>~%" (+ mx 5) my color label)
-              (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\" font-size=\"16\" fill=\"~A\">~A</text>~%" mx (- my 10) color label))))
+              (progn
+                (setf rect-x (+ mx 5)
+                      rect-y (- my (/ text-h 2))
+                      text-x (+ mx 5)
+                      text-y my)
+                (format s "    <rect x=\"~A\" y=\"~A\" width=\"~A\" height=\"~A\" fill=\"white\"/>~%" rect-x rect-y text-w text-h)
+                (format s "    <text x=\"~A\" y=\"~A\" dominant-baseline=\"middle\" font-size=\"16\" fill=\"~A\">~A</text>~%" text-x text-y color label))
+              (progn
+                (setf rect-x (- mx (/ text-w 2))
+                      rect-y (- my 10 text-h)
+                      text-x mx
+                      text-y (- my 15))
+                (format s "    <rect x=\"~A\" y=\"~A\" width=\"~A\" height=\"~A\" fill=\"white\"/>~%" rect-x rect-y text-w text-h)
+                (format s "    <text x=\"~A\" y=\"~A\" text-anchor=\"middle\" dominant-baseline=\"middle\" font-size=\"16\" fill=\"~A\">~A</text>~%" text-x text-y color label)))))
       (format s "  </g>~%"))))
 
 (defun get-unique-colors (edges)
