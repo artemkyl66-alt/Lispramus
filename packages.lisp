@@ -7,7 +7,7 @@
            #:edge #:make-edge #:edge-id #:edge-label #:edge-color
            #:edge-side #:edge-side-type
            #:edge-x1 #:edge-y1 #:edge-x2 #:edge-y2
-           #:edge-rev
+           #:edge-arrow
            #:connection #:make-connection #:connection-from #:connection-to #:connection-side #:connection-label
            #:model-error #:missing-field-error #:negative-dimension-error
            #:invalid-connection-error #:invalid-cost-error))

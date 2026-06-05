@@ -67,7 +67,7 @@
   ((id :initarg :id :accessor edge-id :initform nil)
    (label :initarg :label :accessor edge-label :initform "")
    (side :initarg :side :accessor edge-side :initform :input)
-   (rev :initarg :rev :accessor edge-rev :initform nil)
+   (arrow :initarg :arrow :accessor edge-arrow :initform :end) ;; can be :start, :end, or nil
    (color :initarg :color :accessor edge-color :initform "black")
    (x1 :initarg :x1 :accessor edge-x1 :initform nil)
    (y1 :initarg :y1 :accessor edge-y1 :initform nil)
@@ -78,8 +78,8 @@
   (unless (typep side 'edge-side-type)
     (error 'invalid-connection-error :side side)))
 
-(defun make-edge (&rest args &key id label side rev color x1 y1 x2 y2)
-  (declare (ignore id label side rev color x1 y1 x2 y2))
+(defun make-edge (&rest args &key id label side arrow color x1 y1 x2 y2)
+  (declare (ignore id label side arrow color x1 y1 x2 y2))
   (apply #'make-instance 'edge args))
 
 (defclass connection ()

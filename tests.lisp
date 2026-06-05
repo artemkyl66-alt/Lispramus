@@ -39,7 +39,7 @@
 
 (test test-decomposition-layout
   (let* ((n1 (make-node :id "n1" :title "P1" :x 0 :y 0))
-         (n2 (make-node :id "n2" :title "P2" :x 200 :y 200))
+         (n2 (make-node :id "n2" :title "P2" :x 600 :y 600))
          (c (make-connection n1 n2 :side :input :label "Data"))
          (edges (calculate-layout (list n1 n2) (list c))))
     (is (listp edges))))

@@ -50,14 +50,19 @@
          (y2 (edge-y2 edge))
          (label (edge-label edge))
          (color (edge-color edge))
-         (rev (edge-rev edge))
+         (arrow (edge-arrow edge))
          (color-id (get-hex-color-id color))
-         (marker (if rev (format nil "url(#arrow-start-~A)" color-id) (format nil "url(#arrow-end-~A)" color-id))))
+         (marker (case arrow
+                   (:start (format nil "url(#arrow-start-~A)" color-id))
+                   (:end (format nil "url(#arrow-end-~A)" color-id))
+                   (t nil))))
     (with-output-to-string (s)
       (format s "  <g class=\"edge\">~%")
-      (format s "    <path d=\"M ~A ~A L ~A ~A\" stroke=\"~A\" stroke-width=\"1\" marker-~A=\"~A\" fill=\"none\"/>~%"
-              x1 y1 x2 y2 color
-              (if rev "start" "end") marker)
+      (if marker
+          (format s "    <path d=\"M ~A ~A L ~A ~A\" stroke=\"~A\" stroke-width=\"1\" marker-~A=\"~A\" fill=\"none\"/>~%"
+                  x1 y1 x2 y2 color (if (eq arrow :start) "start" "end") marker)
+          (format s "    <path d=\"M ~A ~A L ~A ~A\" stroke=\"~A\" stroke-width=\"1\" fill=\"none\"/>~%"
+                  x1 y1 x2 y2 color))
       (when (and label (not (string= label "")))
         ;; heuristic midpoint for label
         (let* ((mx (+ (min x1 x2) (/ (abs (- x1 x2)) 2)))
